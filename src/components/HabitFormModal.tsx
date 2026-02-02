@@ -80,7 +80,7 @@ export default function HabitFormModal({ isOpen, habit, onClose }: HabitFormModa
   const timeValue = `${String(reminderHour).padStart(2, '0')}:${String(reminderMinute).padStart(2, '0')}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[var(--background)] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-[var(--background)] flex flex-col max-w-[600px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between px-[16px] py-[12px] border-b border-[var(--primary-15)]">
         <button

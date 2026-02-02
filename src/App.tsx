@@ -29,7 +29,7 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <div className="mx-auto w-full max-w-[600px]">
+    <div className="mx-auto w-full max-w-[600px] min-h-screen bg-[var(--background)]">
       <BrowserRouter>
         <AuthProvider>
           <AppRoutes />

@@ -11,6 +11,7 @@
 :root {
   --primary: rgb(0, 0, 0);
   --background: rgb(255, 255, 255);
+  --outer-bg: rgb(245, 240, 235);
   --secondary: rgb(142, 142, 147);
   --accent: rgb(208, 2, 27);
   --accent-75: rgba(208, 2, 27, 0.75);
@@ -24,6 +25,7 @@
   :root {
     --primary: rgb(255, 255, 255);
     --background: rgb(0, 0, 0);
+    --outer-bg: rgb(26, 24, 22);
     --secondary: rgb(142, 142, 147);
     --accent: rgb(208, 2, 27);
     --accent-75: rgba(208, 2, 27, 0.75);
@@ -37,7 +39,7 @@
 body {
   margin: 0;
   font-family: monospace;
-  background: var(--background);
+  background: var(--outer-bg);
   color: var(--primary);
   overflow-x: hidden;
 }
