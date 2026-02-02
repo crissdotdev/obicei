@@ -29,7 +29,7 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <div className="mx-auto w-full max-w-[600px] h-dvh bg-[var(--background)] flex flex-col overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+    <div className="mx-auto w-full max-w-[600px] h-dvh bg-[var(--background)] flex flex-col overflow-hidden" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}>
       <BrowserRouter>
         <AuthProvider>
           <AppRoutes />
