@@ -45,7 +45,7 @@ export default function HabitRow({ habit, entry, date, onNumericTap }: HabitRowP
       hapticMedium();
       setBinaryBounce(true);
       setTimeout(() => setBinaryBounce(false), 150);
-      await toggleBinary(habit.id, date);
+      await toggleBinary(habit.id, date, isCompleted);
     },
     [habit.id, date]
   );

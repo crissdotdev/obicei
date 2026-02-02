@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite'
+import { cloudflare } from '@cloudflare/vite-plugin'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import basicSsl from '@vitejs/plugin-basic-ssl'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   plugins: [
-    basicSsl(),
+    cloudflare(),
     react(),
     tailwindcss(),
     VitePWA({

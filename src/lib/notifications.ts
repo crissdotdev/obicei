@@ -1,4 +1,3 @@
-import { user } from './db';
 import { syncRemindersToServer, unsubscribeFromPush } from './push';
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -8,7 +7,6 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export function scheduleReminder(habitId: string, habitName: string, hour: number, minute: number): void {
-  // Store reminder config - service worker will handle firing
   const reminders = JSON.parse(localStorage.getItem('obicei-reminders') || '{}');
   reminders[habitId] = { habitName, hour, minute };
   localStorage.setItem('obicei-reminders', JSON.stringify(reminders));
@@ -23,7 +21,6 @@ export function cancelReminder(habitId: string): void {
 let syncTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function syncAllRemindersToServer(): void {
-  // Debounce: multiple mutations in quick succession only trigger one sync
   if (syncTimeout) clearTimeout(syncTimeout);
 
   syncTimeout = setTimeout(() => {
@@ -33,16 +30,12 @@ export function syncAllRemindersToServer(): void {
       return { habitId, habitName, hour, minute };
     });
 
-    const is = user.is as { pub?: string } | undefined;
-    const pub = is?.pub;
-    if (!pub) return;
-
     if (reminderList.length === 0) {
-      unsubscribeFromPush(pub).catch(() => {});
+      unsubscribeFromPush().catch(() => {});
       return;
     }
 
-    syncRemindersToServer(pub, reminderList).catch((err) =>
+    syncRemindersToServer(reminderList).catch((err) =>
       console.error('Failed to sync reminders to server:', err),
     );
   }, 500);
@@ -75,5 +68,5 @@ export function startReminderChecker(): void {
         localStorage.setItem('obicei-reminders-fired', JSON.stringify(lastFired));
       }
     }
-  }, 60000); // Check every minute
+  }, 60000);
 }

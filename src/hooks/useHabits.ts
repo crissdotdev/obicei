@@ -1,103 +1,49 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { user } from '../lib/db';
-import { generateId } from '../lib/gun-utils';
+import { useState, useEffect, useMemo } from 'react';
+import { api } from '../lib/api';
 import type { Habit } from '../models/habit';
+import type { HabitEntry } from '../models/habit-entry';
 import { toDateString } from '../lib/date-utils';
 import { scheduleReminder, cancelReminder, syncAllRemindersToServer } from '../lib/notifications';
 
-// ─── Helpers ─────────────────────────────────────────────────
-
-/** Remove Gun.js internal metadata from a habit object. */
-function cleanHabitData(data: Habit & { _?: unknown; entries?: unknown }): Habit {
-  const clean = { ...data };
-  delete (clean as Record<string, unknown>)._;
-  delete (clean as Record<string, unknown>).entries;
-  return clean as Habit;
-}
-
-/** Strip undefined values from an object before passing to Gun.put().
- *  Gun rejects undefined — use null for "no value" fields. */
-function gunSafe(obj: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    result[key] = value === undefined ? null : value;
-  }
-  return result;
-}
-
 // ─── Reactive Hooks ──────────────────────────────────────────
+
+let globalRefreshCounter = 0;
+const listeners = new Set<() => void>();
+
+function triggerRefresh() {
+  globalRefreshCounter++;
+  listeners.forEach((fn) => fn());
+}
+
+function useRefreshTrigger() {
+  const [, setCount] = useState(0);
+  useEffect(() => {
+    const handler = () => setCount((c) => c + 1);
+    listeners.add(handler);
+    return () => { listeners.delete(handler); };
+  }, []);
+}
 
 export function useHabits() {
   const [habits, setHabits] = useState<Habit[]>([]);
-  const dataRef = useRef<Map<string, Habit>>(new Map());
+  useRefreshTrigger();
 
   useEffect(() => {
-    dataRef.current = new Map();
-    setHabits([]);
-
-    const node = user.get('habits' as never).map();
-    // Collect Gun event handles for per-listener cleanup (Gun .off() kills ALL listeners on a node)
-    const events: Array<{ off: () => void }> = [];
-
-    const handler = (data: (Habit & { _?: unknown }) | null, key: string, _msg: unknown, ev: { off: () => void }) => {
-      events.push(ev);
-      if (data === null || data === undefined || !data.name) {
-        dataRef.current.delete(key);
-      } else {
-        dataRef.current.set(key, cleanHabitData(data));
-      }
-
-      const arr = Array.from(dataRef.current.values())
-        .filter((h) => !h.isArchived)
-        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-      setHabits(arr);
-    };
-
-    node.on(handler as never);
-
-    return () => {
-      events.forEach((ev) => ev.off());
-    };
-  }, []);
+    let cancelled = false;
+    api.get<Habit[]>('/habits').then((data) => {
+      if (!cancelled) setHabits(data);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [globalRefreshCounter]);
 
   return { habits };
 }
 
 export function useHabit(id: string | undefined) {
-  const [habit, setHabit] = useState<Habit | undefined>(undefined);
-
-  useEffect(() => {
-    if (!id) {
-      setHabit(undefined);
-      return;
-    }
-
-    const node = user.get('habits' as never).get(id as never);
-    let ev: { off: () => void } | null = null;
-
-    const handler = (data: (Habit & { _?: unknown }) | null, _key: string, _msg: unknown, event: { off: () => void }) => {
-      ev = event;
-      if (data === null || data === undefined || !data.name) {
-        setHabit(undefined);
-      } else {
-        setHabit(cleanHabitData(data));
-      }
-    };
-
-    node.on(handler as never);
-
-    return () => {
-      ev?.off();
-    };
-  }, [id]);
-
-  return habit;
+  const { habits } = useHabits();
+  return useMemo(() => habits.find((h) => h.id === id), [habits, id]);
 }
 
-/**
- * Subscribe to Gun entry nodes for each habit on a given date.
- * Accepts habits array to avoid creating a redundant useHabits() subscription.
- */
 export function useEntriesForDate(date: Date, habits: Habit[]) {
   const dateStr = toDateString(date);
   const habitIds = useMemo(() => habits.map((h) => h.id), [habits]);
@@ -105,106 +51,49 @@ export function useEntriesForDate(date: Date, habits: Habit[]) {
   return useEntriesForHabitIds(habitIds, dateStr);
 }
 
-/**
- * Shared subscription logic: subscribe to entry nodes for a list of habitIds on a date.
- * Returns entries array with { habitId, date, completed, value? }.
- */
 function useEntriesForHabitIds(habitIds: string[], dateStr: string) {
-  const [entries, setEntries] = useState<
-    { habitId: string; date: string; completed: boolean; value?: number }[]
-  >([]);
-  const dataRef = useRef<Map<string, { habitId: string; date: string; completed: boolean; value?: number }>>(new Map());
+  const [entries, setEntries] = useState<HabitEntry[]>([]);
+  useRefreshTrigger();
 
   useEffect(() => {
-    dataRef.current = new Map();
-    setEntries([]);
-
-    if (habitIds.length === 0 || !dateStr) return;
-
-    const events: Array<{ off: () => void }> = [];
-
-    for (const habitId of habitIds) {
-      const node = user
-        .get('habits' as never)
-        .get(habitId as never)
-        .get('entries' as never)
-        .get(dateStr as never);
-
-      const handler = (data: Record<string, unknown> | null, _key: string, _msg: unknown, ev: { off: () => void }) => {
-        events.push(ev);
-        if (data === null || data === undefined || data.completed === undefined) {
-          dataRef.current.delete(habitId);
-        } else {
-          dataRef.current.set(habitId, {
-            habitId,
-            date: dateStr,
-            completed: data.completed as boolean,
-            value: data.value as number | undefined,
-          });
-        }
-        setEntries(Array.from(dataRef.current.values()));
-      };
-
-      node.on(handler as never);
+    if (habitIds.length === 0 || !dateStr) {
+      setEntries([]);
+      return;
     }
 
-    return () => {
-      events.forEach((ev) => ev.off());
-    };
-  }, [habitIds.join(','), dateStr]);
+    let cancelled = false;
+
+    // Single API call for all entries on this date
+    api.get<HabitEntry[]>(`/habits/entries/by-date/${dateStr}`)
+      .then((allEntries) => {
+        if (!cancelled) {
+          const filtered = allEntries.filter((e) => habitIds.includes(e.habitId));
+          setEntries(filtered);
+        }
+      })
+      .catch(() => {});
+
+    return () => { cancelled = true; };
+  }, [habitIds.join(','), dateStr, globalRefreshCounter]);
 
   return entries;
 }
 
 export function useAllEntries(habitId: string) {
-  const [entries, setEntries] = useState<
-    { habitId: string; date: string; completed: boolean; value?: number }[]
-  >([]);
-  const dataRef = useRef<
-    Map<string, { habitId: string; date: string; completed: boolean; value?: number }>
-  >(new Map());
-
-  const buildArray = useCallback(() => {
-    const arr = Array.from(dataRef.current.values());
-    arr.sort((a, b) => a.date.localeCompare(b.date));
-    setEntries(arr);
-  }, []);
+  const [entries, setEntries] = useState<HabitEntry[]>([]);
+  useRefreshTrigger();
 
   useEffect(() => {
-    dataRef.current = new Map();
-    setEntries([]);
-
     if (!habitId) return;
-
-    const node = user
-      .get('habits' as never)
-      .get(habitId as never)
-      .get('entries' as never)
-      .map();
-
-    const events: Array<{ off: () => void }> = [];
-
-    const handler = (data: Record<string, unknown> | null, key: string, _msg: unknown, ev: { off: () => void }) => {
-      events.push(ev);
-      if (data === null || data === undefined || data.completed === undefined) {
-        dataRef.current.delete(key);
-      } else {
-        dataRef.current.set(key, {
-          habitId,
-          date: key,
-          completed: data.completed as boolean,
-          value: data.value as number | undefined,
-        });
+    let cancelled = false;
+    api.get<HabitEntry[]>(`/habits/${habitId}/entries`).then((data) => {
+      if (!cancelled) {
+        const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
+        setEntries(sorted);
       }
-      buildArray();
-    };
-
-    node.on(handler as never);
-
-    return () => {
-      events.forEach((ev) => ev.off());
-    };
-  }, [habitId, buildArray]);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [habitId, globalRefreshCounter]);
 
   return entries;
 }
@@ -219,32 +108,26 @@ export async function createHabit(data: {
   reminderHour: number;
   reminderMinute: number;
 }): Promise<void> {
-  const id = generateId();
+  const id = crypto.randomUUID().replace(/-/g, '');
 
-  const habit = gunSafe({
+  await api.post('/habits', {
     id,
     name: data.name.trim(),
     type: data.type,
-    unit: data.type === 'numeric' ? (data.unit?.trim() || null) : null,
+    unit: data.type === 'numeric' ? (data.unit?.trim() || undefined) : undefined,
     createdAt: toDateString(new Date()),
     reminderEnabled: data.reminderEnabled,
     reminderHour: data.reminderHour,
     reminderMinute: data.reminderMinute,
     sortOrder: Date.now(),
-    isArchived: false,
   });
-
-  user.get('habits' as never).get(id as never).put(habit as never, ((ack: { err?: string }) => {
-    if (ack.err) {
-      console.error('Gun put error (createHabit):', ack.err);
-    }
-  }) as never);
 
   if (data.reminderEnabled) {
     scheduleReminder(id, data.name, data.reminderHour, data.reminderMinute);
   }
 
   syncAllRemindersToServer();
+  triggerRefresh();
 }
 
 export async function updateHabit(
@@ -257,17 +140,13 @@ export async function updateHabit(
     reminderMinute: number;
   },
 ): Promise<void> {
-  user.get('habits' as never).get(id as never).put(gunSafe({
+  await api.put(`/habits/${id}`, {
     name: data.name.trim(),
     unit: data.unit?.trim() || null,
     reminderEnabled: data.reminderEnabled,
     reminderHour: data.reminderHour,
     reminderMinute: data.reminderMinute,
-  }) as never, ((ack: { err?: string }) => {
-    if (ack.err) {
-      console.error('Gun put error (updateHabit):', ack.err);
-    }
-  }) as never);
+  });
 
   if (data.reminderEnabled) {
     scheduleReminder(id, data.name, data.reminderHour, data.reminderMinute);
@@ -276,39 +155,26 @@ export async function updateHabit(
   }
 
   syncAllRemindersToServer();
+  triggerRefresh();
 }
 
 export async function deleteHabit(id: string): Promise<void> {
   cancelReminder(id);
-  // Nullify the habit node — Gun doesn't truly delete, but null signals removal
-  user.get('habits' as never).get(id as never).put(null as never, ((ack: { err?: string }) => {
-    if (ack.err) {
-      console.error('Gun put error (deleteHabit):', ack.err);
-    }
-  }) as never);
-
+  await api.delete(`/habits/${id}`);
   syncAllRemindersToServer();
+  triggerRefresh();
 }
 
-export async function toggleBinary(habitId: string, date: Date): Promise<void> {
+export async function toggleBinary(habitId: string, date: Date, currentCompleted?: boolean): Promise<void> {
   const dateStr = toDateString(date);
-  const entryNode = user
-    .get('habits' as never)
-    .get(habitId as never)
-    .get('entries' as never)
-    .get(dateStr as never);
+  const newCompleted = !(currentCompleted ?? false);
 
-  // Read current state
-  const current = await new Promise<{ completed?: boolean }>((resolve) => {
-    entryNode.once(((data: Record<string, unknown> | null) => {
-      resolve(data ? { completed: data.completed as boolean } : {});
-    }) as never);
+  await api.put(`/habits/${habitId}/entries/${dateStr}`, {
+    completed: newCompleted,
+    value: null,
   });
 
-  const newCompleted = !(current.completed ?? false);
-  entryNode.put({ completed: newCompleted } as never, ((ack: { err?: string }) => {
-    if (ack.err) console.error('Gun put error (toggleBinary):', ack.err);
-  }) as never);
+  triggerRefresh();
 }
 
 export async function setNumericValue(
@@ -317,26 +183,20 @@ export async function setNumericValue(
   date: Date,
 ): Promise<void> {
   const dateStr = toDateString(date);
-  user
-    .get('habits' as never)
-    .get(habitId as never)
-    .get('entries' as never)
-    .get(dateStr as never)
-    .put({ completed: true, value } as never, ((ack: { err?: string }) => {
-      if (ack.err) console.error('Gun put error (setNumericValue):', ack.err);
-    }) as never);
+  await api.put(`/habits/${habitId}/entries/${dateStr}`, {
+    completed: true,
+    value,
+  });
+  triggerRefresh();
 }
 
 export async function clearNumericValue(habitId: string, date: Date): Promise<void> {
   const dateStr = toDateString(date);
-  user
-    .get('habits' as never)
-    .get(habitId as never)
-    .get('entries' as never)
-    .get(dateStr as never)
-    .put({ completed: false, value: null } as never, ((ack: { err?: string }) => {
-      if (ack.err) console.error('Gun put error (clearNumericValue):', ack.err);
-    }) as never);
+  await api.put(`/habits/${habitId}/entries/${dateStr}`, {
+    completed: false,
+    value: null,
+  });
+  triggerRefresh();
 }
 
 export function useCompletionStatus(date: Date, habits: Habit[]) {

@@ -1,3 +1,5 @@
+import { api, getToken } from './api';
+
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -16,16 +18,13 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
 
   const registration = await navigator.serviceWorker.ready;
 
-  // Return existing subscription if available
   const existing = await registration.pushManager.getSubscription();
   if (existing) {
     cachedSubscription = existing;
     return existing;
   }
 
-  // Fetch VAPID public key from server
-  const res = await fetch('/api/push/vapid-public-key');
-  const { publicKey } = await res.json();
+  const { publicKey } = await api.get<{ publicKey: string }>('/push/vapid-public-key');
 
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
@@ -37,29 +36,27 @@ export async function subscribeToPush(): Promise<PushSubscription | null> {
 }
 
 export async function syncRemindersToServer(
-  pub: string,
   reminders: { habitId: string; habitName: string; hour: number; minute: number }[],
 ): Promise<void> {
   const subscription = cachedSubscription ?? (await subscribeToPush());
   if (!subscription) return;
 
-  await fetch('/api/push/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ pub, subscription: subscription.toJSON(), reminders }),
+  await api.post('/push/subscribe', {
+    subscription: subscription.toJSON(),
+    reminders,
   });
 }
 
-/** Re-establish push subscription on app load for users with existing reminders. */
 export async function initPushIfNeeded(): Promise<void> {
   const reminders = JSON.parse(localStorage.getItem('obicei-reminders') || '{}');
   if (Object.keys(reminders).length === 0) return;
   if (!('PushManager' in window)) return;
+  if (!getToken()) return;
 
   await subscribeToPush();
 }
 
-export async function unsubscribeFromPush(pub: string): Promise<void> {
+export async function unsubscribeFromPush(): Promise<void> {
   if (!('PushManager' in window)) return;
 
   const registration = await navigator.serviceWorker.ready;
@@ -68,11 +65,9 @@ export async function unsubscribeFromPush(pub: string): Promise<void> {
     await subscription.unsubscribe();
   }
 
-  await fetch('/api/push/unsubscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ pub }),
-  });
+  if (getToken()) {
+    await api.post('/push/unsubscribe');
+  }
 
   cachedSubscription = null;
 }

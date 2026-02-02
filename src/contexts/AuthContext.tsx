@@ -1,13 +1,13 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
-import { useGunAuth } from '../hooks/useGunAuth';
+import { useRestAuth } from '../hooks/useAuth';
 
-type AuthContextValue = ReturnType<typeof useGunAuth>;
+type AuthContextValue = ReturnType<typeof useRestAuth>;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const auth = useGunAuth();
+  const auth = useRestAuth();
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 }
 
