@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Habit } from '../models/habit';
 import { createHabit, updateHabit } from '../hooks/useHabits';
 import { requestNotificationPermission } from '../lib/notifications';
+import { subscribeToPush } from '../lib/push';
 
 interface HabitFormModalProps {
   isOpen: boolean;
@@ -71,6 +72,7 @@ export default function HabitFormModal({ isOpen, habit, onClose }: HabitFormModa
     if (!reminderEnabled) {
       const granted = await requestNotificationPermission();
       if (!granted) return;
+      subscribeToPush().catch(() => {});
     }
     setReminderEnabled(!reminderEnabled);
   };

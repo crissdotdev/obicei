@@ -1,10 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { ArrowLeft, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import { db } from '../lib/db';
-import { useAllEntries } from '../hooks/useHabits';
-import { deleteHabit } from '../hooks/useHabits';
+import { useHabit, useAllEntries, deleteHabit } from '../hooks/useHabits';
 import {
   useCurrentStreak,
   useLongestStreak,
@@ -28,7 +25,7 @@ export default function HabitDetailView() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [periodDays, setPeriodDays] = useState(30);
 
-  const habit = useLiveQuery(() => (id ? db.habits.get(id) : undefined), [id]);
+  const habit = useHabit(id);
   const entries = useAllEntries(id ?? '');
 
   // Binary stats

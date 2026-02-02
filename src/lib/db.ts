@@ -1,18 +1,13 @@
-import Dexie, { type Table } from 'dexie';
-import type { Habit } from '../models/habit';
-import type { HabitEntry } from '../models/habit-entry';
+import Gun from 'gun';
+import 'gun/sea';
+import 'gun/lib/radix';
+import 'gun/lib/radisk';
+import 'gun/lib/store';
+import 'gun/lib/rindexed';
 
-export class ObiceiDB extends Dexie {
-  habits!: Table<Habit>;
-  entries!: Table<HabitEntry>;
+export const gun = Gun({
+  peers: [window.location.origin + '/gun'],
+  localStorage: false,
+});
 
-  constructor() {
-    super('obicei-db');
-    this.version(1).stores({
-      habits: 'id, sortOrder, isArchived',
-      entries: 'id, habitId, date, [habitId+date]',
-    });
-  }
-}
-
-export const db = new ObiceiDB();
+export const user = gun.user().recall({ sessionStorage: true });
