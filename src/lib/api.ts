@@ -25,8 +25,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   });
 
   if (res.status === 401) {
+    const hadToken = !!getToken();
     clearToken();
-    window.location.reload();
+    if (hadToken) {
+      window.location.reload();
+    }
     throw new Error('Unauthorized');
   }
 
