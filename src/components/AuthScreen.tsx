@@ -29,7 +29,7 @@ export default function AuthScreen() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-[24px]">
+    <div className="flex-1 flex flex-col items-center justify-center px-[24px]">
       <h1
         className="text-[42px] leading-none text-[var(--primary)] mb-[8px]"
         style={{ fontFamily: "'Ndot57Regular', monospace" }}

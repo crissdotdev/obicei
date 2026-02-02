@@ -9,7 +9,7 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center font-mono text-[var(--secondary)]">
+      <div className="flex-1 flex items-center justify-center font-mono text-[var(--secondary)]">
         Loading...
       </div>
     );
@@ -29,15 +29,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <div className="mx-auto w-full max-w-[600px] min-h-screen bg-[var(--background)]">
+    <div className="mx-auto w-full max-w-[600px] h-dvh bg-[var(--background)] flex flex-col overflow-hidden">
       <BrowserRouter>
         <AuthProvider>
           <AppRoutes />
         </AuthProvider>
       </BrowserRouter>
-      <p className="text-center font-mono text-[11px] text-[var(--secondary)] pb-[16px] pt-[32px] opacity-40">
-        v{__APP_VERSION__}
-      </p>
     </div>
   );
 }

@@ -46,14 +46,14 @@ export default function HabitDetailView() {
 
   if (!habit) {
     return (
-      <div className="min-h-screen flex items-center justify-center font-mono text-[var(--secondary)]">
+      <div className="flex-1 flex items-center justify-center font-mono text-[var(--secondary)]">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0">
       {/* Navigation Bar */}
       <div className="flex items-center justify-between px-[16px] py-[12px] border-b border-[var(--primary-06)]">
         <button

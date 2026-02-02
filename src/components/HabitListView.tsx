@@ -57,9 +57,9 @@ export default function HabitListView() {
     entries.find((e) => e.habitId === habitId);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0">
       {/* Title + Add/Logout buttons */}
-      <div className="flex items-start justify-between px-[16px] pt-[4px]">
+      <div className="flex items-start justify-between px-[16px] pt-[4px] shrink-0">
         <div className="flex items-center gap-[4px]">
           <button
             onClick={() => setShowForm(true)}
@@ -85,14 +85,16 @@ export default function HabitListView() {
       </div>
 
       {/* Date Strip */}
-      <DateStrip
-        selectedDate={selectedDate}
-        onSelectDate={setSelectedDate}
-        habits={habits}
-      />
+      <div className="shrink-0">
+        <DateStrip
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          habits={habits}
+        />
+      </div>
 
-      {/* Habit List */}
-      <div className="flex-1 px-[16px]">
+      {/* Habit List — scrollable */}
+      <div className="flex-1 overflow-y-auto px-[16px]">
         {habits.length === 0 ? (
           <EmptyState onAddHabit={() => setShowForm(true)} />
         ) : (
@@ -108,6 +110,9 @@ export default function HabitListView() {
             ))}
           </div>
         )}
+        <p className="text-center font-mono text-[11px] text-[var(--secondary)] pb-[16px] pt-[32px] opacity-40">
+          v{__APP_VERSION__}
+        </p>
       </div>
 
       {/* Modals */}
