@@ -2,6 +2,7 @@ name = "obicei"
 main = "./worker/index.ts"
 compatibility_date = "2025-04-03"
 compatibility_flags = ["nodejs_compat"]
+workers_dev = true
 
 [assets]
 not_found_handling = "single-page-application"
@@ -9,12 +10,16 @@ binding = "ASSETS"
 run_worker_first = ["/api/*"]
 
 [vars]
-VAPID_SUBJECT = "mailto:noreply@obicei.app"
+VAPID_SUBJECT = "mailto:noreply@obicei.cc"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "obicei"
 database_id = "45601855-2c99-4443-9b6c-c1000850fba2"
+
+[[routes]]
+pattern = "obicei.cc"
+custom_domain = true
 
 [triggers]
 crons = ["* * * * *"]
