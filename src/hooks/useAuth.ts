@@ -17,12 +17,13 @@ export function useRestAuth() {
     setLoading(false);
   }, []);
 
-  const signup = useCallback(async (user: string, password: string): Promise<boolean> => {
+  const signup = useCallback(async (user: string, password: string, meta?: { website?: string; _t?: number }): Promise<boolean> => {
     setError(null);
     try {
       const data = await api.post<{ token: string; username: string }>('/auth/signup', {
         username: user,
         password,
+        ...meta,
       });
       setToken(data.token);
       localStorage.setItem('obicei-username', data.username);
@@ -35,12 +36,13 @@ export function useRestAuth() {
     }
   }, []);
 
-  const login = useCallback(async (user: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (user: string, password: string, meta?: { website?: string; _t?: number }): Promise<boolean> => {
     setError(null);
     try {
       const data = await api.post<{ token: string; username: string }>('/auth/login', {
         username: user,
         password,
+        ...meta,
       });
       setToken(data.token);
       localStorage.setItem('obicei-username', data.username);

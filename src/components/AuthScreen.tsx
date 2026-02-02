@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AuthScreen() {
@@ -7,6 +7,8 @@ export default function AuthScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
+  const mountedAt = useRef(Date.now());
 
   const canSubmit = username.trim().length > 0 && password.length >= 8;
 
@@ -14,11 +16,14 @@ export default function AuthScreen() {
     e.preventDefault();
     if (!canSubmit || submitting) return;
 
+    const meta: { _t: number; website?: string } = { _t: mountedAt.current };
+    if (honeypot) meta.website = honeypot;
+
     setSubmitting(true);
     if (isSignup) {
-      await signup(username.trim(), password);
+      await signup(username.trim(), password, meta);
     } else {
-      await login(username.trim(), password);
+      await login(username.trim(), password, meta);
     }
     setSubmitting(false);
   };
@@ -36,6 +41,20 @@ export default function AuthScreen() {
       </p>
 
       <form onSubmit={handleSubmit} className="w-full max-w-[320px] space-y-[16px]">
+        {/* Honeypot — invisible to humans, bots auto-fill it */}
+        <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }}>
+          <label htmlFor="website">Website</label>
+          <input
+            type="text"
+            id="website"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+          />
+        </div>
+
         <div>
           <label className="block font-mono text-[12px] text-[var(--secondary)] uppercase mb-[6px]">
             Username

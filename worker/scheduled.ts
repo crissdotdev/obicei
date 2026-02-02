@@ -1,5 +1,6 @@
 import type { Env } from './env';
 import { buildPushPayload } from '@block65/webcrypto-web-push';
+import { cleanupOldAttempts } from './rate-limit';
 
 export async function handleScheduled(env: Env): Promise<void> {
   const now = new Date();
@@ -67,6 +68,17 @@ export async function handleScheduled(env: Env): Promise<void> {
   }
 
   // Clean expired sessions
-  const nowUnix = Math.floor(Date.now() / 1000);
-  await env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(nowUnix).run();
+  try {
+    const nowUnix = Math.floor(Date.now() / 1000);
+    await env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(nowUnix).run();
+  } catch (err) {
+    console.error('Failed to clean expired sessions:', err);
+  }
+
+  // Clean old rate-limit entries
+  try {
+    await cleanupOldAttempts(env);
+  } catch (err) {
+    console.error('Failed to clean old auth attempts:', err);
+  }
 }
