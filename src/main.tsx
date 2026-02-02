@@ -18,3 +18,12 @@ startReminderChecker();
 initPushIfNeeded()
   .then(() => syncAllRemindersToServer())
   .catch(() => {});
+
+// Check for service worker updates periodically (every 60 minutes)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.ready.then((registration) => {
+    setInterval(() => {
+      registration.update();
+    }, 60 * 60 * 1000);
+  });
+}

@@ -35,6 +35,9 @@ export default function App() {
           <AppRoutes />
         </AuthProvider>
       </BrowserRouter>
+      <p className="text-center font-mono text-[11px] text-[var(--secondary)] pb-[16px] pt-[32px] opacity-40">
+        v{__APP_VERSION__}
+      </p>
     </div>
   );
 }
