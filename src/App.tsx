@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthScreen from './components/AuthScreen';
 import HabitListView from './components/HabitListView';
 import HabitDetailView from './components/HabitDetailView';
+import SettingsView from './components/SettingsView';
 
 function AppRoutes() {
   const { isLoggedIn, loading } = useAuth();
@@ -23,6 +24,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<HabitListView />} />
       <Route path="/habit/:id" element={<HabitDetailView />} />
+      <Route path="/settings" element={<SettingsView />} />
     </Routes>
   );
 }

@@ -2,13 +2,52 @@ import type { Env } from './env';
 import { buildPushPayload } from '@block65/webcrypto-web-push';
 import { cleanupOldAttempts } from './rate-limit';
 
+async function sendPush(
+  env: Env,
+  endpoint: string,
+  p256dh: string,
+  auth: string,
+  payload: string,
+): Promise<void> {
+  const subscription = {
+    endpoint,
+    expirationTime: null,
+    keys: { p256dh, auth },
+  };
+
+  try {
+    const pushPayload = await buildPushPayload(
+      {
+        data: payload,
+        options: { urgency: 'normal', ttl: 3600 },
+      },
+      subscription,
+      {
+        subject: env.VAPID_SUBJECT,
+        publicKey: env.VAPID_PUBLIC_KEY,
+        privateKey: env.VAPID_PRIVATE_KEY,
+      },
+    );
+
+    const response = await fetch(endpoint, pushPayload);
+
+    if (response.status === 410 || response.status === 404) {
+      await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?')
+        .bind(endpoint)
+        .run();
+    }
+  } catch (err) {
+    console.error(`Push failed for ${endpoint}:`, err);
+  }
+}
+
 export async function handleScheduled(env: Env): Promise<void> {
   const now = new Date();
   const utcHour = now.getUTCHours();
   const utcMinute = now.getUTCMinutes();
 
-  // Find habits with reminders at this time, joined with their user's push subscriptions
-  const rows = await env.DB.prepare(
+  // Per-habit reminders
+  const habitRows = await env.DB.prepare(
     `SELECT h.name AS habit_name, h.id AS habit_id,
             ps.endpoint, ps.p256dh, ps.auth
      FROM habits h
@@ -21,50 +60,34 @@ export async function handleScheduled(env: Env): Promise<void> {
     .bind(utcHour, utcMinute)
     .all();
 
-  for (const row of rows.results) {
+  for (const row of habitRows.results) {
     const payload = JSON.stringify({
       title: 'obicei',
       body: `Time to track: ${row.habit_name}`,
       tag: `habit-${row.habit_id}`,
     });
+    await sendPush(env, row.endpoint as string, row.p256dh as string, row.auth as string, payload);
+  }
 
-    const subscription = {
-      endpoint: row.endpoint as string,
-      expirationTime: null,
-      keys: {
-        p256dh: row.p256dh as string,
-        auth: row.auth as string,
-      },
-    };
+  // Global reminders
+  const globalRows = await env.DB.prepare(
+    `SELECT ps.endpoint, ps.p256dh, ps.auth
+     FROM user_settings us
+     JOIN push_subscriptions ps ON ps.user_id = us.user_id
+     WHERE us.global_reminder_enabled = 1
+       AND us.global_reminder_hour = ?
+       AND us.global_reminder_minute = ?`,
+  )
+    .bind(utcHour, utcMinute)
+    .all();
 
-    try {
-      const pushPayload = await buildPushPayload(
-        {
-          data: payload,
-          options: {
-            urgency: 'normal',
-            ttl: 3600,
-          },
-        },
-        subscription,
-        {
-          subject: env.VAPID_SUBJECT,
-          publicKey: env.VAPID_PUBLIC_KEY,
-          privateKey: env.VAPID_PRIVATE_KEY,
-        },
-      );
-
-      const response = await fetch(subscription.endpoint, pushPayload);
-
-      // Remove stale subscriptions
-      if (response.status === 410 || response.status === 404) {
-        await env.DB.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?')
-          .bind(subscription.endpoint)
-          .run();
-      }
-    } catch (err) {
-      console.error(`Push failed for ${subscription.endpoint}:`, err);
-    }
+  for (const row of globalRows.results) {
+    const payload = JSON.stringify({
+      title: 'obicei',
+      body: 'Time to track your habits',
+      tag: 'global-reminder',
+    });
+    await sendPush(env, row.endpoint as string, row.p256dh as string, row.auth as string, payload);
   }
 
   // Clean expired sessions

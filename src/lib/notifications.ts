@@ -1,5 +1,6 @@
+import { api, getToken } from './api';
 import { syncRemindersToServer, unsubscribeFromPush } from './push';
-import { localToUtc } from './timezone';
+import { localToUtc, utcToLocal } from './timezone';
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!('Notification' in window)) return false;
@@ -43,7 +44,37 @@ export function syncAllRemindersToServer(): void {
   }, 500);
 }
 
+// Global reminder localStorage helpers (times stored in LOCAL timezone)
+const GLOBAL_REMINDER_KEY = 'obicei-global-reminder';
+
+export function getGlobalReminder(): { enabled: boolean; hour: number; minute: number } | null {
+  const raw = localStorage.getItem(GLOBAL_REMINDER_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+export function setGlobalReminder(enabled: boolean, hour: number, minute: number): void {
+  localStorage.setItem(GLOBAL_REMINDER_KEY, JSON.stringify({ enabled, hour, minute }));
+}
+
+/**
+ * Re-sync global reminder to server with current UTC offset (handles DST drift).
+ * Called on app load.
+ */
+export async function syncGlobalReminderToServer(): Promise<void> {
+  if (!getToken()) return;
+  const saved = getGlobalReminder();
+  if (!saved || !saved.enabled) return;
+
+  const utc = localToUtc(saved.hour, saved.minute);
+  await api.put('/settings', {
+    globalReminderEnabled: true,
+    globalReminderHour: utc.hour,
+    globalReminderMinute: utc.minute,
+  }).catch((err) => console.error('Failed to sync global reminder:', err));
+}
+
 // In-app reminder check (runs when tab is open)
+// All times in localStorage are in LOCAL timezone.
 let reminderInterval: ReturnType<typeof setInterval> | null = null;
 
 export function startReminderChecker(): void {
@@ -57,6 +88,7 @@ export function startReminderChecker(): void {
     const lastFired = JSON.parse(localStorage.getItem('obicei-reminders-fired') || '{}');
     const today = now.toISOString().split('T')[0];
 
+    // Per-habit reminders
     for (const [habitId, config] of Object.entries(reminders)) {
       const { habitName, hour, minute } = config as { habitName: string; hour: number; minute: number };
       const firedKey = `${habitId}-${today}`;
@@ -65,6 +97,20 @@ export function startReminderChecker(): void {
         new Notification('obicei', {
           body: `Time to track: ${habitName}`,
           tag: `habit-${habitId}`,
+        });
+        lastFired[firedKey] = true;
+        localStorage.setItem('obicei-reminders-fired', JSON.stringify(lastFired));
+      }
+    }
+
+    // Global reminder
+    const global = getGlobalReminder();
+    if (global?.enabled) {
+      const firedKey = `global-${today}`;
+      if (now.getHours() === global.hour && now.getMinutes() === global.minute && !lastFired[firedKey]) {
+        new Notification('obicei', {
+          body: 'Time to track your habits',
+          tag: 'global-reminder',
         });
         lastFired[firedKey] = true;
         localStorage.setItem('obicei-reminders-fired', JSON.stringify(lastFired));

@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Plus, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Settings } from 'lucide-react';
 import { startOfDay, isToday, getFullWeekday, formatMediumDate } from '../lib/date-utils';
 import { useHabits, useEntriesForDate, setNumericValue, clearNumericValue } from '../hooks/useHabits';
-import { useAuth } from '../contexts/AuthContext';
 import { hapticSuccess } from '../lib/haptics';
 import type { Habit } from '../models/habit';
 import DateStrip from './DateStrip';
@@ -19,9 +19,9 @@ export default function HabitListView() {
     entry: { habitId: string; date: string; completed: boolean; value?: number } | undefined;
   } | null>(null);
 
+  const navigate = useNavigate();
   const { habits } = useHabits();
   const entries = useEntriesForDate(selectedDate, habits);
-  const { logout } = useAuth();
 
   const titleText = isToday(selectedDate)
     ? getFullWeekday(selectedDate)
@@ -58,7 +58,7 @@ export default function HabitListView() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      {/* Title + Add/Logout buttons */}
+      {/* Title + Add/Settings buttons */}
       <div className="flex items-start justify-between px-[16px] pt-[4px] shrink-0">
         <div className="flex items-center gap-[4px]">
           <button
@@ -69,11 +69,11 @@ export default function HabitListView() {
             <Plus size={24} strokeWidth={2} />
           </button>
           <button
-            onClick={logout}
+            onClick={() => navigate('/settings')}
             className="p-[8px] text-[var(--secondary)] bg-transparent border-none cursor-pointer"
-            aria-label="Log out"
+            aria-label="Settings"
           >
-            <LogOut size={18} strokeWidth={2} />
+            <Settings size={18} strokeWidth={2} />
           </button>
         </div>
         <h1
@@ -110,9 +110,7 @@ export default function HabitListView() {
             ))}
           </div>
         )}
-        <p className="text-center font-mono text-[11px] text-[var(--secondary)] pb-[16px] pt-[32px] opacity-40">
-          v{__APP_VERSION__}
-        </p>
+        <div className="pb-[16px] pt-[32px]" />
       </div>
 
       {/* Modals */}

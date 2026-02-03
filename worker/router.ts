@@ -3,6 +3,7 @@ import { authenticate, json, unauthorized } from './middleware';
 import { handleSignup, handleLogin, handleLogout } from './routes/auth';
 import { handleHabits } from './routes/habits';
 import { handlePush } from './routes/push';
+import { handleSettings } from './routes/settings';
 
 export async function handleRequest(request: Request, env: Env): Promise<Response> {
   try {
@@ -37,6 +38,9 @@ async function routeRequest(request: Request, env: Env): Promise<Response> {
 
   // Push routes
   if (path.startsWith('/api/push/')) return handlePush(request, env, user, path, method);
+
+  // Settings routes
+  if (path.startsWith('/api/settings')) return handleSettings(request, env, user, path, method);
 
   return json({ error: 'Not found' }, 404);
 }

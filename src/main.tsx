@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/globals.css';
 import App from './App';
-import { startReminderChecker, syncAllRemindersToServer } from './lib/notifications';
+import { startReminderChecker, syncAllRemindersToServer, syncGlobalReminderToServer } from './lib/notifications';
 import { initPushIfNeeded } from './lib/push';
 
 createRoot(document.getElementById('root')!).render(
@@ -18,6 +18,9 @@ startReminderChecker();
 initPushIfNeeded()
   .then(() => syncAllRemindersToServer())
   .catch(() => {});
+
+// Re-sync global reminder UTC offset (handles DST drift)
+syncGlobalReminderToServer().catch(() => {});
 
 // Check for service worker updates periodically (every 60 minutes)
 if ('serviceWorker' in navigator) {
