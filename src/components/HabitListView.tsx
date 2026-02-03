@@ -66,6 +66,7 @@ export default function HabitListView() {
   const entries = useEntriesForDate(selectedDate, habits);
 
   const groups = useMemo(() => groupHabits(habits), [habits]);
+  const isDraggingRef = useRef(false);
   const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [habitOrders, setHabitOrders] = useState<Record<string, string[]>>({});
 
@@ -264,12 +265,15 @@ export default function HabitListView() {
                           value={id}
                           as="div"
                           style={{ position: 'relative' }}
+                          onDragStart={() => { isDraggingRef.current = true; }}
+                          onDragEnd={() => { requestAnimationFrame(() => { isDraggingRef.current = false; }); }}
                         >
                           <HabitRow
                             habit={habit}
                             entry={getEntryForHabit(id)}
                             date={selectedDate}
                             onNumericTap={handleNumericTap}
+                            isDraggingRef={isDraggingRef}
                           />
                         </Reorder.Item>
                       );

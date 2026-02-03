@@ -13,9 +13,10 @@ interface HabitRowProps {
   entry: HabitEntry | undefined;
   date: Date;
   onNumericTap: (habit: Habit, entry: HabitEntry | undefined) => void;
+  isDraggingRef?: React.RefObject<boolean>;
 }
 
-export default function HabitRow({ habit, entry, date, onNumericTap }: HabitRowProps) {
+export default function HabitRow({ habit, entry, date, onNumericTap, isDraggingRef }: HabitRowProps) {
   const navigate = useNavigate();
   const [binaryBounce, setBinaryBounce] = useState(false);
   const [numericBounce, setNumericBounce] = useState(false);
@@ -60,8 +61,9 @@ export default function HabitRow({ habit, entry, date, onNumericTap }: HabitRowP
   );
 
   const handleRowClick = useCallback(() => {
+    if (isDraggingRef?.current) return;
     navigate(`/habit/${habit.id}`);
-  }, [navigate, habit.id]);
+  }, [navigate, habit.id, isDraggingRef]);
 
   return (
     <div
