@@ -36,12 +36,30 @@
   }
 }
 
+*,
+*::before,
+*::after {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
 body {
   margin: 0;
   font-family: monospace;
   background: var(--outer-bg);
   color: var(--primary);
   overflow-x: hidden;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+textarea,
+[contenteditable] {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
 }
 
 .hide-scrollbar {

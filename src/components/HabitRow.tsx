@@ -68,7 +68,7 @@ export default function HabitRow({ habit, entry, date, onNumericTap, isDraggingR
   return (
     <div
       onClick={handleRowClick}
-      className="flex items-center justify-between py-[4px] cursor-pointer"
+      className="flex items-center justify-between py-[4px] cursor-pointer rounded-[6px] transition-colors duration-100 active:bg-[var(--primary-06)]"
       role="link"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter') handleRowClick(); }}
