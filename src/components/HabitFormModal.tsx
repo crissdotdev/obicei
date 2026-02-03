@@ -3,6 +3,7 @@ import type { Habit } from '../models/habit';
 import { createHabit, updateHabit } from '../hooks/useHabits';
 import { requestNotificationPermission } from '../lib/notifications';
 import { subscribeToPush } from '../lib/push';
+import { utcToLocal } from '../lib/timezone';
 
 interface HabitFormModalProps {
   isOpen: boolean;
@@ -27,8 +28,9 @@ export default function HabitFormModal({ isOpen, habit, onClose }: HabitFormModa
         setType(habit.type);
         setUnit(habit.unit ?? '');
         setReminderEnabled(habit.reminderEnabled);
-        setReminderHour(habit.reminderHour);
-        setReminderMinute(habit.reminderMinute);
+        const localTime = utcToLocal(habit.reminderHour, habit.reminderMinute);
+        setReminderHour(localTime.hour);
+        setReminderMinute(localTime.minute);
       } else {
         setName('');
         setType('binary');

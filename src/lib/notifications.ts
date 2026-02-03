@@ -1,4 +1,5 @@
 import { syncRemindersToServer, unsubscribeFromPush } from './push';
+import { localToUtc } from './timezone';
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!('Notification' in window)) return false;
@@ -27,7 +28,8 @@ export function syncAllRemindersToServer(): void {
     const reminders = JSON.parse(localStorage.getItem('obicei-reminders') || '{}');
     const reminderList = Object.entries(reminders).map(([habitId, config]) => {
       const { habitName, hour, minute } = config as { habitName: string; hour: number; minute: number };
-      return { habitId, habitName, hour, minute };
+      const utc = localToUtc(hour, minute);
+      return { habitId, habitName, hour: utc.hour, minute: utc.minute };
     });
 
     if (reminderList.length === 0) {

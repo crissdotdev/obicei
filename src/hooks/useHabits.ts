@@ -4,6 +4,7 @@ import type { Habit } from '../models/habit';
 import type { HabitEntry } from '../models/habit-entry';
 import { toDateString } from '../lib/date-utils';
 import { scheduleReminder, cancelReminder, syncAllRemindersToServer } from '../lib/notifications';
+import { localToUtc } from '../lib/timezone';
 
 // ─── Reactive Hooks ──────────────────────────────────────────
 
@@ -110,6 +111,8 @@ export async function createHabit(data: {
 }): Promise<void> {
   const id = crypto.randomUUID().replace(/-/g, '');
 
+  const utcReminder = localToUtc(data.reminderHour, data.reminderMinute);
+
   await api.post('/habits', {
     id,
     name: data.name.trim(),
@@ -117,8 +120,8 @@ export async function createHabit(data: {
     unit: data.type === 'numeric' ? (data.unit?.trim() || undefined) : undefined,
     createdAt: toDateString(new Date()),
     reminderEnabled: data.reminderEnabled,
-    reminderHour: data.reminderHour,
-    reminderMinute: data.reminderMinute,
+    reminderHour: utcReminder.hour,
+    reminderMinute: utcReminder.minute,
     sortOrder: Date.now(),
   });
 
@@ -140,12 +143,14 @@ export async function updateHabit(
     reminderMinute: number;
   },
 ): Promise<void> {
+  const utcReminder = localToUtc(data.reminderHour, data.reminderMinute);
+
   await api.put(`/habits/${id}`, {
     name: data.name.trim(),
     unit: data.unit?.trim() || null,
     reminderEnabled: data.reminderEnabled,
-    reminderHour: data.reminderHour,
-    reminderMinute: data.reminderMinute,
+    reminderHour: utcReminder.hour,
+    reminderMinute: utcReminder.minute,
   });
 
   if (data.reminderEnabled) {
