@@ -60,7 +60,7 @@ export default function HabitDetailView() {
       <div className="flex items-center justify-between px-[16px] py-[12px] border-b border-[var(--primary-06)]">
         <button
           onClick={() => navigate('/')}
-          className="p-[4px] text-[var(--accent)] bg-transparent border-none cursor-pointer flex items-center gap-[4px]"
+          className="p-[4px] text-[var(--accent)] bg-transparent border-none cursor-pointer flex items-center gap-[4px] rounded-[6px] transition-colors duration-100 active:bg-[var(--primary-06)]"
           aria-label="Go back"
         >
           <ArrowLeft size={20} />
@@ -75,7 +75,7 @@ export default function HabitDetailView() {
         <div className="relative">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-[4px] text-[var(--primary)] bg-transparent border-none cursor-pointer"
+            className="p-[4px] text-[var(--primary)] bg-transparent border-none cursor-pointer rounded-[6px] transition-colors duration-100 active:bg-[var(--primary-06)]"
             aria-label="More options"
           >
             <MoreHorizontal size={20} />
@@ -92,7 +92,7 @@ export default function HabitDetailView() {
                     setMenuOpen(false);
                     setShowEditForm(true);
                   }}
-                  className="w-full flex items-center gap-[8px] px-[12px] py-[10px] font-mono text-[14px] text-[var(--primary)] bg-transparent border-none cursor-pointer hover:bg-[var(--primary-06)]"
+                  className="w-full flex items-center gap-[8px] px-[12px] py-[10px] font-mono text-[14px] text-[var(--primary)] bg-transparent border-none cursor-pointer active:bg-[var(--primary-06)] transition-colors duration-100"
                 >
                   <Pencil size={14} />
                   Edit
@@ -102,7 +102,7 @@ export default function HabitDetailView() {
                     setMenuOpen(false);
                     setShowDeleteConfirm(true);
                   }}
-                  className="w-full flex items-center gap-[8px] px-[12px] py-[10px] font-mono text-[14px] text-red-500 bg-transparent border-none cursor-pointer hover:bg-[var(--primary-06)]"
+                  className="w-full flex items-center gap-[8px] px-[12px] py-[10px] font-mono text-[14px] text-red-500 bg-transparent border-none cursor-pointer active:bg-[var(--primary-06)] transition-colors duration-100"
                 >
                   <Trash2 size={14} />
                   Delete
@@ -187,13 +187,13 @@ export default function HabitDetailView() {
             <div className="flex border-t border-[var(--primary-15)]">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-[11px] font-mono text-[16px] text-[var(--accent)] bg-transparent border-none cursor-pointer"
+                className="flex-1 py-[11px] font-mono text-[16px] text-[var(--accent)] bg-transparent border-none cursor-pointer active:bg-[var(--primary-06)] transition-colors duration-100"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 py-[11px] font-mono text-[16px] font-semibold text-red-500 bg-transparent border-none cursor-pointer border-l border-[var(--primary-15)]"
+                className="flex-1 py-[11px] font-mono text-[16px] font-semibold text-red-500 bg-transparent border-none cursor-pointer border-l border-[var(--primary-15)] active:bg-[var(--primary-06)] transition-colors duration-100"
               >
                 Delete
               </button>

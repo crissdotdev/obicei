@@ -85,7 +85,7 @@ export default function AuthScreen() {
         </div>
 
         {error && (
-          <p className="font-mono text-[13px] text-red-500">
+          <p className="font-mono text-[13px] text-red-500 select-text">
             {error}
           </p>
         )}
@@ -99,7 +99,7 @@ export default function AuthScreen() {
         <button
           type="submit"
           disabled={!canSubmit || submitting}
-          className={`w-full py-[12px] rounded-[8px] font-mono text-[16px] font-semibold border-none cursor-pointer transition-colors ${
+          className={`w-full py-[12px] rounded-[8px] font-mono text-[16px] font-semibold border-none cursor-pointer transition-all duration-100 active:opacity-80 ${
             canSubmit && !submitting
               ? 'bg-[var(--accent)] text-white'
               : 'bg-[var(--primary-15)] text-[var(--secondary)]'
@@ -115,7 +115,7 @@ export default function AuthScreen() {
           setUsername('');
           setPassword('');
         }}
-        className="mt-[24px] font-mono text-[14px] text-[var(--accent)] bg-transparent border-none cursor-pointer"
+        className="mt-[24px] font-mono text-[14px] text-[var(--accent)] bg-transparent border-none cursor-pointer active:opacity-70 transition-opacity duration-100"
       >
         {isSignup ? 'Already have an account? Sign in' : "Don't have an account? Create one"}
       </button>

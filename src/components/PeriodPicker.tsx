@@ -17,7 +17,7 @@ export default function PeriodPicker({ selectedDays, onSelect }: PeriodPickerPro
         <button
           key={period.days}
           onClick={() => onSelect(period.days)}
-          className={`flex-1 py-[6px] px-[12px] font-mono text-[12px] font-medium border-none cursor-pointer transition-colors ${
+          className={`flex-1 py-[6px] px-[12px] font-mono text-[12px] font-medium border-none cursor-pointer transition-all duration-100 active:opacity-80 ${
             selectedDays === period.days
               ? 'bg-[var(--primary)] text-[var(--background)]'
               : 'bg-transparent text-[var(--primary)]'

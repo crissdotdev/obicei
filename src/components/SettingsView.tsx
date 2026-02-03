@@ -71,7 +71,7 @@ export default function SettingsView() {
       <div className="flex items-center justify-between px-[16px] py-[12px] border-b border-[var(--primary-15)] shrink-0">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-[2px] font-mono text-[16px] text-[var(--accent)] bg-transparent border-none cursor-pointer"
+          className="flex items-center gap-[2px] font-mono text-[16px] text-[var(--accent)] bg-transparent border-none cursor-pointer rounded-[6px] transition-colors duration-100 active:bg-[var(--primary-06)]"
         >
           <ChevronLeft size={20} strokeWidth={2} />
           Back
@@ -125,7 +125,7 @@ export default function SettingsView() {
         <div className="pt-[24px] border-t border-[var(--primary-15)]">
           <button
             onClick={logout}
-            className="flex items-center gap-[8px] font-mono text-[16px] text-[var(--secondary)] bg-transparent border-none cursor-pointer"
+            className="flex items-center gap-[8px] font-mono text-[16px] text-[var(--secondary)] bg-transparent border-none cursor-pointer rounded-[6px] transition-colors duration-100 active:bg-[var(--primary-06)]"
           >
             <LogOut size={18} strokeWidth={2} />
             Log Out

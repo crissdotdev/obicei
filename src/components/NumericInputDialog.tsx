@@ -58,13 +58,13 @@ export default function NumericInputDialog({
         <div className="flex border-t border-[var(--primary-15)]">
           <button
             onClick={onCancel}
-            className="flex-1 py-[11px] font-mono text-[16px] text-[var(--accent)] bg-transparent border-none cursor-pointer border-r border-[var(--primary-15)]"
+            className="flex-1 py-[11px] font-mono text-[16px] text-[var(--accent)] bg-transparent border-none cursor-pointer border-r border-[var(--primary-15)] active:bg-[var(--primary-06)] transition-colors duration-100"
           >
             Cancel
           </button>
           <button
             onClick={() => onSave(value.trim())}
-            className="flex-1 py-[11px] font-mono text-[16px] font-semibold text-[var(--accent)] bg-transparent border-none cursor-pointer"
+            className="flex-1 py-[11px] font-mono text-[16px] font-semibold text-[var(--accent)] bg-transparent border-none cursor-pointer active:bg-[var(--primary-06)] transition-colors duration-100"
           >
             Save
           </button>

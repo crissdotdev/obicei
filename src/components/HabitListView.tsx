@@ -186,14 +186,14 @@ export default function HabitListView() {
         <div className="flex items-center gap-[4px]">
           <button
             onClick={() => setShowForm(true)}
-            className="p-[8px] text-[var(--primary)] bg-transparent border-none cursor-pointer"
+            className="p-[8px] text-[var(--primary)] bg-transparent border-none cursor-pointer rounded-[8px] transition-colors duration-100 active:bg-[var(--primary-06)]"
             aria-label="Add new habit"
           >
             <Plus size={24} strokeWidth={2} />
           </button>
           <button
             onClick={() => navigate('/settings')}
-            className="p-[8px] text-[var(--secondary)] bg-transparent border-none cursor-pointer"
+            className="p-[8px] text-[var(--secondary)] bg-transparent border-none cursor-pointer rounded-[8px] transition-colors duration-100 active:bg-[var(--primary-06)]"
             aria-label="Settings"
           >
             <Settings size={18} strokeWidth={2} />

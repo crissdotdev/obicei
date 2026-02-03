@@ -28,7 +28,7 @@ function DateButton({ date, isSelected, allCompleted, onSelect }: DateButtonProp
   return (
     <button
       onClick={() => onSelect(date)}
-      className={`flex-shrink-0 flex flex-col items-center justify-center gap-[2px] w-[36px] h-[44px] rounded-[8px] ${bgClass} ${textColor}`}
+      className={`flex-shrink-0 flex flex-col items-center justify-center gap-[2px] w-[36px] h-[44px] rounded-[8px] transition-opacity duration-100 active:opacity-80 ${bgClass} ${textColor}`}
       aria-label={`${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}${allCompleted ? ', all habits completed' : ''}`}
       aria-pressed={isSelected}
     >

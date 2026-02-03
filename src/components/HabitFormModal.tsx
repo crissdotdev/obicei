@@ -93,7 +93,7 @@ export default function HabitFormModal({ isOpen, habit, existingCategories = [],
       <div className="flex items-center justify-between px-[16px] py-[12px] border-b border-[var(--primary-15)]">
         <button
           onClick={onClose}
-          className="font-mono text-[16px] text-[var(--accent)] bg-transparent border-none cursor-pointer"
+          className="font-mono text-[16px] text-[var(--accent)] bg-transparent border-none cursor-pointer active:opacity-70 transition-opacity duration-100"
         >
           Cancel
         </button>
@@ -106,7 +106,7 @@ export default function HabitFormModal({ isOpen, habit, existingCategories = [],
         <button
           onClick={handleSave}
           disabled={!canSave}
-          className={`font-mono text-[16px] font-semibold bg-transparent border-none cursor-pointer ${
+          className={`font-mono text-[16px] font-semibold bg-transparent border-none cursor-pointer active:opacity-70 transition-opacity duration-100 ${
             canSave ? 'text-[var(--accent)]' : 'text-[var(--secondary)]'
           }`}
         >
@@ -162,7 +162,7 @@ export default function HabitFormModal({ isOpen, habit, existingCategories = [],
             <div className="flex rounded-[8px] overflow-hidden border border-[var(--primary-15)]">
               <button
                 onClick={() => setType('binary')}
-                className={`flex-1 py-[8px] font-mono text-[14px] border-none cursor-pointer transition-colors ${
+                className={`flex-1 py-[8px] font-mono text-[14px] border-none cursor-pointer transition-all duration-100 active:opacity-80 ${
                   type === 'binary'
                     ? 'bg-[var(--primary)] text-[var(--background)]'
                     : 'bg-transparent text-[var(--primary)]'
@@ -172,7 +172,7 @@ export default function HabitFormModal({ isOpen, habit, existingCategories = [],
               </button>
               <button
                 onClick={() => setType('numeric')}
-                className={`flex-1 py-[8px] font-mono text-[14px] border-none cursor-pointer transition-colors ${
+                className={`flex-1 py-[8px] font-mono text-[14px] border-none cursor-pointer transition-all duration-100 active:opacity-80 ${
                   type === 'numeric'
                     ? 'bg-[var(--primary)] text-[var(--background)]'
                     : 'bg-transparent text-[var(--primary)]'
