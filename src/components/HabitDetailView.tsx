@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import { useHabit, useAllEntries, deleteHabit } from '../hooks/useHabits';
+import { useHabit, useHabits, useAllEntries, deleteHabit } from '../hooks/useHabits';
 import {
   useCurrentStreak,
   useLongestStreak,
@@ -26,6 +26,8 @@ export default function HabitDetailView() {
   const [periodDays, setPeriodDays] = useState(30);
 
   const habit = useHabit(id);
+  const { habits: allHabits } = useHabits();
+  const existingCategories = [...new Set(allHabits.map((h) => h.category).filter((c): c is string => !!c))];
   const entries = useAllEntries(id ?? '');
 
   // Binary stats
@@ -160,6 +162,7 @@ export default function HabitDetailView() {
       <HabitFormModal
         isOpen={showEditForm}
         habit={habit}
+        existingCategories={existingCategories}
         onClose={() => setShowEditForm(false)}
       />
 

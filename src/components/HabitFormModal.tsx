@@ -8,15 +8,17 @@ import { utcToLocal } from '../lib/timezone';
 interface HabitFormModalProps {
   isOpen: boolean;
   habit?: Habit;
+  existingCategories?: string[];
   onClose: () => void;
 }
 
-export default function HabitFormModal({ isOpen, habit, onClose }: HabitFormModalProps) {
+export default function HabitFormModal({ isOpen, habit, existingCategories = [], onClose }: HabitFormModalProps) {
   const isEditing = !!habit;
 
   const [name, setName] = useState('');
   const [type, setType] = useState<'binary' | 'numeric'>('binary');
   const [unit, setUnit] = useState('');
+  const [category, setCategory] = useState('');
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderHour, setReminderHour] = useState(9);
   const [reminderMinute, setReminderMinute] = useState(0);
@@ -27,6 +29,7 @@ export default function HabitFormModal({ isOpen, habit, onClose }: HabitFormModa
         setName(habit.name);
         setType(habit.type);
         setUnit(habit.unit ?? '');
+        setCategory(habit.category ?? '');
         setReminderEnabled(habit.reminderEnabled);
         const localTime = utcToLocal(habit.reminderHour, habit.reminderMinute);
         setReminderHour(localTime.hour);
@@ -35,6 +38,7 @@ export default function HabitFormModal({ isOpen, habit, onClose }: HabitFormModa
         setName('');
         setType('binary');
         setUnit('');
+        setCategory('');
         setReminderEnabled(false);
         setReminderHour(9);
         setReminderMinute(0);
@@ -56,6 +60,7 @@ export default function HabitFormModal({ isOpen, habit, onClose }: HabitFormModa
         reminderEnabled,
         reminderHour,
         reminderMinute,
+        category: category.trim() || null,
       });
     } else {
       await createHabit({
@@ -65,6 +70,7 @@ export default function HabitFormModal({ isOpen, habit, onClose }: HabitFormModa
         reminderEnabled,
         reminderHour,
         reminderMinute,
+        category: category.trim() || null,
       });
     }
     onClose();
@@ -123,6 +129,28 @@ export default function HabitFormModal({ isOpen, habit, onClose }: HabitFormModa
             className="w-full px-[12px] py-[10px] font-mono text-[16px] text-[var(--primary)] bg-[var(--primary-06)] rounded-[8px] border-none outline-none"
             autoFocus
           />
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="block font-mono text-[12px] text-[var(--secondary)] uppercase mb-[8px]">
+            Category
+          </label>
+          <input
+            type="text"
+            list="category-suggestions"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="Optional (e.g. Health, Work)"
+            className="w-full px-[12px] py-[10px] font-mono text-[16px] text-[var(--primary)] bg-[var(--primary-06)] rounded-[8px] border-none outline-none"
+          />
+          {existingCategories.length > 0 && (
+            <datalist id="category-suggestions">
+              {existingCategories.map((cat) => (
+                <option key={cat} value={cat} />
+              ))}
+            </datalist>
+          )}
         </div>
 
         {/* Type (create only) */}

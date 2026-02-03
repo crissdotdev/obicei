@@ -20,9 +20,9 @@ export async function handleHabits(
   if (path === '/api/habits' && method === 'GET') {
     const rows = await env.DB.prepare(
       `SELECT id, name, type, unit, created_at, reminder_enabled, reminder_hour,
-              reminder_minute, sort_order, is_archived
+              reminder_minute, sort_order, is_archived, category, category_order
        FROM habits WHERE user_id = ? AND is_archived = 0
-       ORDER BY sort_order ASC`,
+       ORDER BY CASE WHEN category IS NULL THEN 0 ELSE 1 END, category_order ASC, sort_order ASC`,
     )
       .bind(user.userId)
       .all();
@@ -43,6 +43,8 @@ export async function handleHabits(
       reminderHour?: number;
       reminderMinute?: number;
       sortOrder?: number;
+      category?: string | null;
+      categoryOrder?: number;
     }>(request);
     if (!body) return json({ error: 'Invalid JSON body' }, 400);
 
@@ -58,8 +60,8 @@ export async function handleHabits(
 
     await env.DB.prepare(
       `INSERT INTO habits (id, user_id, name, type, unit, created_at, reminder_enabled,
-                           reminder_hour, reminder_minute, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                           reminder_hour, reminder_minute, sort_order, category, category_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
       .bind(
         id,
@@ -72,6 +74,8 @@ export async function handleHabits(
         body.reminderHour ?? 9,
         body.reminderMinute ?? 0,
         body.sortOrder ?? Date.now(),
+        body.category?.trim() || null,
+        body.categoryOrder ?? 0,
       )
       .run();
 
@@ -114,6 +118,24 @@ export async function handleHabits(
     return handleGetEntries(env, user, habitId);
   }
 
+  // PUT /api/habits/reorder — batch update sort_order, category, category_order
+  if (path === '/api/habits/reorder' && method === 'PUT') {
+    const body = await parseJsonBody<{
+      habits: { id: string; sortOrder: number; category?: string | null; categoryOrder?: number }[];
+    }>(request);
+    if (!body?.habits?.length) return json({ error: 'habits array required' }, 400);
+
+    for (const h of body.habits) {
+      await env.DB.prepare(
+        'UPDATE habits SET sort_order = ?, category = ?, category_order = ? WHERE id = ? AND user_id = ?',
+      )
+        .bind(h.sortOrder, h.category?.trim() || null, h.categoryOrder ?? 0, h.id, user.userId)
+        .run();
+    }
+
+    return json({ ok: true });
+  }
+
   // Match /api/habits/:id
   const habitMatch = path.match(/^\/api\/habits\/([^/]+)$/);
   if (habitMatch) {
@@ -144,6 +166,8 @@ async function handleUpdateHabit(
     reminderMinute?: number;
     sortOrder?: number;
     isArchived?: boolean;
+    category?: string | null;
+    categoryOrder?: number;
   }>(request);
   if (!body) return json({ error: 'Invalid JSON body' }, 400);
 
@@ -183,6 +207,14 @@ async function handleUpdateHabit(
   if (body.isArchived !== undefined) {
     sets.push('is_archived = ?');
     values.push(body.isArchived ? 1 : 0);
+  }
+  if (body.category !== undefined) {
+    sets.push('category = ?');
+    values.push(body.category?.trim() || null);
+  }
+  if (body.categoryOrder !== undefined) {
+    sets.push('category_order = ?');
+    values.push(body.categoryOrder);
   }
 
   if (sets.length === 0) {
@@ -267,5 +299,7 @@ function toHabitJson(row: Record<string, unknown>) {
     reminderMinute: row.reminder_minute,
     sortOrder: row.sort_order,
     isArchived: !!(row.is_archived as number),
+    category: (row.category as string) || null,
+    categoryOrder: row.category_order as number,
   };
 }

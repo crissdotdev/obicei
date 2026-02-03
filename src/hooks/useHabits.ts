@@ -108,6 +108,8 @@ export async function createHabit(data: {
   reminderEnabled: boolean;
   reminderHour: number;
   reminderMinute: number;
+  category?: string | null;
+  categoryOrder?: number;
 }): Promise<void> {
   const id = crypto.randomUUID().replace(/-/g, '');
 
@@ -123,6 +125,8 @@ export async function createHabit(data: {
     reminderHour: utcReminder.hour,
     reminderMinute: utcReminder.minute,
     sortOrder: Date.now(),
+    category: data.category?.trim() || null,
+    categoryOrder: data.categoryOrder ?? 0,
   });
 
   if (data.reminderEnabled) {
@@ -141,6 +145,7 @@ export async function updateHabit(
     reminderEnabled: boolean;
     reminderHour: number;
     reminderMinute: number;
+    category?: string | null;
   },
 ): Promise<void> {
   const utcReminder = localToUtc(data.reminderHour, data.reminderMinute);
@@ -151,6 +156,7 @@ export async function updateHabit(
     reminderEnabled: data.reminderEnabled,
     reminderHour: utcReminder.hour,
     reminderMinute: utcReminder.minute,
+    category: data.category?.trim() || null,
   });
 
   if (data.reminderEnabled) {
@@ -160,6 +166,13 @@ export async function updateHabit(
   }
 
   syncAllRemindersToServer();
+  triggerRefresh();
+}
+
+export async function reorderHabits(
+  habits: { id: string; sortOrder: number; category?: string | null; categoryOrder?: number }[],
+): Promise<void> {
+  await api.put('/habits/reorder', { habits });
   triggerRefresh();
 }
 

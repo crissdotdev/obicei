@@ -1,0 +1,2 @@
+ALTER TABLE habits ADD COLUMN category TEXT;
+ALTER TABLE habits ADD COLUMN category_order INTEGER NOT NULL DEFAULT 0;

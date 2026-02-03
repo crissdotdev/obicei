@@ -11,4 +11,6 @@ export interface Habit {
   reminderMinute: number;
   sortOrder: number;
   isArchived: boolean;
+  category: string | null;
+  categoryOrder: number;
 }
